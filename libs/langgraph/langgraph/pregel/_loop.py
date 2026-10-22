@@ -2143,8 +2143,9 @@ class AsyncPregelLoop(PregelLoop, AbstractAsyncContextManager):
         self._exit_delta_writes = (
             [] if self.durability == "exit" and self.checkpointer is not None else None
         )
-        self._background_executor = AsyncBackgroundExecutor(self.config)
-        self.submit = await self.stack.enter_async_context(self._background_executor)
+        self.submit = await self.stack.enter_async_context(
+            AsyncBackgroundExecutor(self.config)
+        )
         self.channels, self.managed = await achannels_from_checkpoint(
             self.specs,
             self.checkpoint,
@@ -2152,9 +2153,6 @@ class AsyncPregelLoop(PregelLoop, AbstractAsyncContextManager):
             config=self.checkpoint_config,
         )
         self.stack.push(self._suppress_interrupt)
-        # Keep the executor open while exit-mode checkpoint writes are saved.
-        if self.durability == "exit" and self.checkpointer is not None:
-            self.stack.push_async_exit(self._drain_tasks_before_exit)
         self.status = "input"
         self.step = self.checkpoint_metadata["step"] + 1
         self.stop = self.step + self.config["recursion_limit"] + 1
@@ -2167,20 +2165,6 @@ class AsyncPregelLoop(PregelLoop, AbstractAsyncContextManager):
         )
 
         return self
-
-    async def _drain_tasks_before_exit(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        # Await task commits before persisting buffered exit-mode writes.
-        tasks = self._background_executor.tasks.copy()
-        for task, (cancel, _) in tasks.items():
-            if cancel:
-                task.cancel(self._background_executor.sentinel)
-        if tasks:
-            await asyncio.wait(tasks)
 
     async def __aexit__(
         self,
