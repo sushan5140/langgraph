@@ -8,6 +8,7 @@ from typing import TypedDict
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Durability
 
 
 class _State(TypedDict, total=False):
@@ -16,7 +17,9 @@ class _State(TypedDict, total=False):
 
 
 @pytest.mark.parametrize("durability", ["sync", "async", "exit"])
-def test_completed_sibling_is_not_replayed_after_failure(durability: str) -> None:
+def test_completed_sibling_is_not_replayed_after_failure(
+    durability: Durability,
+) -> None:
     """A successful sibling that finishes during shutdown must be resumable."""
     runs: Counter[str] = Counter()
     slow_started = threading.Event()
