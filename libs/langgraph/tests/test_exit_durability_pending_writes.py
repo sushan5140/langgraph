@@ -3,12 +3,12 @@
 import threading
 import time
 from collections import Counter
-from typing import TypedDict
 
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Durability
+from typing_extensions import TypedDict
 
 
 class _State(TypedDict, total=False):
