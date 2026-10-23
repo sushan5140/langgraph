@@ -5,10 +5,11 @@ import time
 from collections import Counter
 
 import pytest
+from typing_extensions import TypedDict
+
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Durability
-from typing_extensions import TypedDict
 
 
 class _State(TypedDict, total=False):
