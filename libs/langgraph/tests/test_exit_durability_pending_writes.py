@@ -58,9 +58,12 @@ def test_completed_sibling_is_not_replayed_after_failure(
 
     saved = saver.get_tuple(config)
     assert saved is not None
-    assert ("b", 1) in [
-        (channel, value) for _, channel, value in saved.pending_writes
-    ]
+    # The completed sibling must have exactly one persisted result.
+    assert [
+        (channel, value)
+        for _, channel, value in saved.pending_writes
+        if channel == "b"
+    ] == [("b", 1)]
     assert runs == {"flaky": 1, "slow": 1}
 
     assert graph.invoke(None, config, durability=durability) == {"a": 1, "b": 1}
